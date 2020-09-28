@@ -30,7 +30,11 @@ mongoose.connection.on("open", () => {
 app.use(cors());
 app.use(express.json());
 
-// listeners
+// events listeners
+
+app.post(`${carol_bus}/events`, (req, res) => {
+  console.log("received event from Carol: ", req.body);
+});
 
 app.listen(process.env.PORT || 3005, () => {
   console.log("Isaac is listening on 3002");
