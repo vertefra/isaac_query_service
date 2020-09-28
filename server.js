@@ -36,22 +36,75 @@ app.use(express.json());
 app.post(`/events`, (req, res) => {
   console.log("received event from Carol: ", req.body);
   switch (req.body.type) {
-    case "userSignUp":
-      const { signUpUsername: username } = req.body.payload;
-      Conversation.create({ username }, (err, createdUser) => {
-        createdUser
-          ? res
-              .status(201)
-              .json({ user_history_created: true, user: createdUser })
-          : res
-              .status(500)
-              .json({ error: "failed creating resource", message: err });
-      });
+    case "userJoin":
+      // check if the user exist.
+      // if the user exists return the found user's username
+      // if it doesnt create a new user with username equal to the username in the payload
+      // and return the created user
+
+      Conversation.findOne({ username: req.body.payload }, (err, foundUser) => {
+        if (foundUser) {
+          console.log("user is found ==> ", foundUser);
+          res.status(200).json({ user_history_exists: true, user: foundUser });
+        } else {
+          Conversation.create(
+            { username: req.body.payload },
+            (err, createdUser) => {
+              createdUser
+                ? res
+                    .status(201)
+                    .json({ user_history_created: true, user: createdUser })
+                : res
+                    .status(500)
+                    .json({ error: "failed creating resource", message: err });
+            }
+          );
+        }
+      }).select("username");
+
       break;
     case "messageSent":
+      console.log("a message has been sent", req.body.payload);
+
+      const { payload } = req.body;
+
+      const {
+        recipient_username,
+        sender_username,
+        timestamp,
+        message,
+      } = payload;
+
+      // find recipient_username and store the message inside received_messages
+      try {
+        Conversation.findOneAndUpdate(
+          { username: recipient_username },
+          { $push: { received_messages: payload } },
+          (err, updatedUser) => {
+            updatedUser ? console.log(updatedUser) : console.log(err);
+          }
+        );
+
+        // find sender_usernmae and store the message inside sent_messages
+
+        Conversation.findOneAndUpdate(
+          { username: sender_username },
+          { $push: { sent_messages: payload } },
+          (err, updatedUser) => {
+            updatedUser ? console.log(updatedUser) : console.log(err);
+          }
+        );
+
+        res.status(200).json({ status: "event received" });
+      } catch (err) {
+        res
+          .status(500)
+          .json({ error: "failed in updating history", message: err });
+      }
       break;
+    default:
+      res.status(200).json({ status: "event received" });
   }
-  res.status(200).json({ status: "ok" });
 });
 
 app.listen(process.env.PORT || 3002, () => {

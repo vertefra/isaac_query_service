@@ -8,12 +8,14 @@ const ConversationSchema = new Schema(
     received_messages: [
       {
         sender_username: { type: String, required: true },
+        recipient_username: { type: String, required: true },
         message: { type: String },
         timestamp: { type: Date },
       },
     ],
     sent_messages: [
       {
+        sender_username: { type: String, required: true },
         recipient_username: { type: String, required: true },
         message: { type: String },
         timestamp: { type: Date },
