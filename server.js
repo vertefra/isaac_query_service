@@ -30,6 +30,7 @@ mongoose.connection.on("open", () => {
 
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
 // events listeners
 
@@ -105,6 +106,27 @@ app.post(`/events`, (req, res) => {
     default:
       res.status(200).json({ status: "event received" });
   }
+});
+
+// query listener
+
+app.get("/query", (req, res) => {
+  const { user, friend } = req.query;
+  Conversation.find({ username: user }, (err, foundMessages) => {
+    if (foundMessages) {
+      console.log(foundMessages[0]);
+      const sent_messages_to_friend = foundMessages[0].sent_messages.filter(
+        (message) => message.recipient_username === friend
+      );
+      const received_messages_from_friend = foundMessages[0].received_messages.filter(
+        (message) => message.sender_username === friend
+      );
+      const messages = sent_messages_to_friend.concat(
+        received_messages_from_friend
+      );
+      res.status(200).json({ messages });
+    }
+  }).select("sent_messages received_messages");
 });
 
 app.listen(process.env.PORT || 3002, () => {
