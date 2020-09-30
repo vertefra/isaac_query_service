@@ -43,25 +43,33 @@ app.post(`/events`, (req, res) => {
       // if it doesnt create a new user with username equal to the username in the payload
       // and return the created user
 
-      Conversation.findOne({ username: req.body.payload }, (err, foundUser) => {
-        if (foundUser) {
-          console.log("user is found ==> ", foundUser);
-          res.status(200).json({ user_history_exists: true, user: foundUser });
-        } else {
-          Conversation.create(
-            { username: req.body.payload },
-            (err, createdUser) => {
-              createdUser
-                ? res
-                    .status(201)
-                    .json({ user_history_created: true, user: createdUser })
-                : res
-                    .status(500)
-                    .json({ error: "failed creating resource", message: err });
-            }
-          );
+      Conversation.findOne(
+        { username: req.body.payload.username },
+        (err, foundUser) => {
+          if (foundUser) {
+            console.log("user is found ==> ", foundUser);
+            res
+              .status(200)
+              .json({ user_history_exists: true, user: foundUser });
+          } else {
+            Conversation.create(
+              { username: req.body.payload },
+              (err, createdUser) => {
+                createdUser
+                  ? res
+                      .status(201)
+                      .json({ user_history_created: true, user: createdUser })
+                  : res
+                      .status(500)
+                      .json({
+                        error: "failed creating resource",
+                        message: err,
+                      });
+              }
+            );
+          }
         }
-      }).select("username");
+      ).select("username");
 
       break;
     case "messageSent":
