@@ -53,18 +53,16 @@ app.post(`/events`, (req, res) => {
               .json({ user_history_exists: true, user: foundUser });
           } else {
             Conversation.create(
-              { username: req.body.payload },
+              { username: req.body.payload.username },
               (err, createdUser) => {
                 createdUser
                   ? res
                       .status(201)
                       .json({ user_history_created: true, user: createdUser })
-                  : res
-                      .status(500)
-                      .json({
-                        error: "failed creating resource",
-                        message: err,
-                      });
+                  : res.status(500).json({
+                      error: "failed creating resource",
+                      message: err,
+                    });
               }
             );
           }
@@ -120,8 +118,9 @@ app.post(`/events`, (req, res) => {
 
 app.get("/query", (req, res) => {
   const { user, friend } = req.query;
+  console.log("incoming query", user, friend);
   Conversation.find({ username: user }, (err, foundMessages) => {
-    if (foundMessages) {
+    if (foundMessages[0]) {
       console.log(foundMessages[0]);
       const sent_messages_to_friend = foundMessages[0].sent_messages.filter(
         (message) => message.recipient_username === friend
@@ -133,6 +132,10 @@ app.get("/query", (req, res) => {
         received_messages_from_friend
       );
       res.status(200).json({ messages });
+    } else {
+      res
+        .status(500)
+        .json({ error: "cant find records for this user", message: err });
     }
   }).select("sent_messages received_messages");
 });
